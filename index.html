@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Premium Bingo Experience</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        /* Simple background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                        radial-gradient(circle at 80% 40%, rgba(255,255,255,0.08) 1px, transparent 1px),
+                        radial-gradient(circle at 40% 80%, rgba(255,255,255,0.06) 1px, transparent 1px);
+            background-size: 100px 100px, 150px 150px, 200px 200px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header with simple styling */
+        h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 40px;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Glass morphism cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .glass-card:hover::before {
+            left: 100%;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Role selection with premium styling */
+        .role-selection {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+        }
+
+        .login-card {
+            padding: 50px;
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-card h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-card p {
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        /* Premium buttons */
+        .premium-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin: 10px;
+            min-width: 200px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .premium-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .premium-btn:hover::before {
+            left: 100%;
+        }
+
+        .premium-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .premium-btn.organizer {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .premium-btn.organizer:hover {
+            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.4);
+        }
+
+        .premium-btn.participant {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+            box-shadow: 0 10px 30px rgba(72, 187, 120, 0.3);
+        }
+
+        .premium-btn.participant:hover {
+            box-shadow: 0 15px 40px rgba(72, 187, 120, 0.4);
+        }
+
+        /* Premium inputs */
+        .premium-input {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.2rem;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+        }
+
+        .premium-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .premium-input:focus {
+            outline: none;
+            border-color: #ffd700;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Game area with advanced layout */
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 40px;
+            align-items: start;
+            margin-bottom: 30px;
+        }
+
+        .participant-game-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 40px;
+            align-items: start;
+        }
+
+        /* Bingo card with 3D effect */
+        .bingo-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bingo-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            animation: rotate 10s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .card-header {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .letter {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .letter:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .bingo-cell {
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #333;
+            cursor: default;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bingo-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .bingo-cell.marked {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+            color: white;
+            border-color: #38a169;
+            animation: pulse 0.6s ease-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .bingo-cell.marked::after {
+            content: '✓';
+            position: absolute;
+            font-size: 2rem;
+            animation: checkmark 0.5s ease-out;
+        }
+
+        @keyframes checkmark {
+            0% { opacity: 0; transform: scale(0); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Control panel with futuristic design */
+        .controls {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border-radius: 25px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+        }
+
+        .current-number {
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+            border-radius: 50%;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            box-shadow: 0 20px 40px rgba(255, 215, 0, 0.3);
+            position: relative;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 20px 40px rgba(255, 215, 0, 0.3); }
+            to { box-shadow: 0 25px 50px rgba(255, 215, 0, 0.5); }
+        }
+
+        .current-number::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+            border-radius: 50%;
+            z-index: -1;
+            animation: rotate 3s linear infinite;
+        }
+
+        /* Participant cards with premium styling */
+        .participants-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .participant-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .participant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .participant-card.inactive {
+            opacity: 0.6;
+            filter: grayscale(50%);
+        }
+
+        .participant-header {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .participant-header.inactive {
+            background: linear-gradient(45deg, #a0aec0, #718096);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .participant-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+        }
+
+        .participant-cell {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .participant-cell.marked {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+            color: white;
+            border-color: #38a169;
+        }
+
+        .participant-cell.winner {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+            border-color: #f6d55c;
+            animation: winner-glow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes winner-glow {
+            from { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            to { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+        }
+
+        /* Toggle buttons with modern design */
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .toggle-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Win message with spectacular animation */
+        .win-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #48bb78, #38a169);
+            color: white;
+            padding: 50px;
+            border-radius: 25px;
+            font-size: 2.5rem;
+            font-weight: 800;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            text-align: center;
+            animation: winAnimation 0.8s ease-out;
+            border: 3px solid #ffd700;
+        }
+
+        @keyframes winAnimation {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5) rotate(-10deg);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.1) rotate(5deg);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+        }
+
+        /* Called numbers with elegant styling */
+        .called-numbers {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 25px;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .called-numbers h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-weight: 700;
+            color: #ffd700;
+            text-align: center;
+        }
+
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .called-number {
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .called-number:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Organizer info bar */
+        .organizer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logout-button {
+            background: linear-gradient(45deg, #e53e3e, #c53030);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(229, 62, 62, 0.3);
+        }
+
+        .logout-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(229, 62, 62, 0.4);
+        }
+
+        /* Approval system styling */
+        .approval-display {
+            background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(255, 237, 78, 0.1));
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
+        }
+
+        .approval-display h3 {
+            margin: 0 0 15px 0;
+            color: #ffd700;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .game-area,
+            .participant-game-layout {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+            
+            .login-card {
+                padding: 30px 25px;
+                margin: 0 15px;
+            }
+            
+            .current-number {
+                font-size: 3.5rem;
+                width: 120px;
+                height: 120px;
+            }
+            
+            .participants-view {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #5a67d8, #6b46c1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>K2 BINGO GAME !!</h1>
+        
+        <div class="role-selection" id="roleSelection">
+            <div class="login-card glass-card">
+                <h2>🎯 Choose Your Adventure</h2>
+                <p>Select your role to begin the ultimate bingo experience</p>
+                <button onclick="showLogin('organizer')" class="premium-btn organizer">🎯 Game Master</button>
+                <button onclick="showLogin('participant')" class="premium-btn participant">👥 Player</button>
+            </div>
+        </div>
+
+        <div class="organizer-login" id="organizerLogin" style="display: none;">
+            <div class="role-selection">
+                <div class="login-card glass-card">
+                    <h2>🎯 Master Control</h2>
+                    <p>Enter your exclusive access code to control the game</p>
+                    <input type="text" id="organizerOtpInput" placeholder="Enter 4-digit code" maxlength="4" class="premium-input">
+                    <button onclick="verifyOrganizerOTP()" class="premium-btn organizer">Verify Access</button>
+                    <button onclick="backToRoleSelection()" class="premium-btn" style="background: linear-gradient(45deg, #e53e3e, #c53030); margin-top: 15px;">← Back</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="participant-login" id="participantLogin" style="display: none;">
+            <div class="role-selection">
+                <div class="login-card glass-card">
+                    <h2>👥 Join the Game</h2>
+                    <p>Enter your details to join this premium bingo experience</p>
+                    <input type="text" id="participantNameInput" placeholder="Enter your name" class="premium-input">
+                    <input type="text" id="participantOtpInput" placeholder="Enter 4-digit code" maxlength="4" class="premium-input">
+                    <button onclick="verifyParticipantOTP()" class="premium-btn participant">Join Game</button>
+                    <button onclick="backToRoleSelection()" class="premium-btn" style="background: linear-gradient(45deg, #e53e3e, #c53030); margin-top: 15px;">← Back</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="view-toggle" id="viewToggle" style="display: none;">
+            <button class="toggle-btn active" onclick="switchView('organizer')">🎯 Control Center</button>
+            <button class="toggle-btn" onclick="switchView('participants')">👥 Players View</button>
+        </div>
+
+        <div class="organizer-area" id="organizerArea" style="display: none;">
+            <div class="controls glass-card" style="max-width: 450px; margin: 0 auto;">
+                <div class="organizer-info">
+                    <span style="font-weight: 600;">🎮 Game Master (<span id="participantCount">0</span> players online)</span>
+                    <button onclick="logout()" class="logout-button">Logout</button>
+                </div>
+                
+                <div class="approval-display" id="approvalDisplay">
+                    <h3 id="approvalTitle">📞 Call Requests</h3>
+                    <div id="approvalContent" style="background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; margin-bottom: 20px;">
+                        <p style="margin: 0; font-size: 1.1rem; font-weight: 600; text-align: center; opacity: 0.7;" id="requestingParticipant">No pending requests</p>
+                        <div id="approvalButtons" style="display: none; margin-top: 15px;">
+                            <div style="display: flex; gap: 15px;">
+                                <button onclick="approveCall()" class="premium-btn participant" style="flex: 1; padding: 12px;">✓ Approve</button>
+                                <button onclick="denyCall()" class="premium-btn" style="background: linear-gradient(45deg, #e53e3e, #c53030); flex: 1; padding: 12px;">✗ Deny</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="current-number" id="currentNumber">?</div>
+                
+                <button class="premium-btn" onclick="callNumber()" id="organizerCallButton" style="width: 100%; margin-bottom: 15px;">🎲 Call Next Number</button>
+                <button class="premium-btn" onclick="resetGame()" style="background: linear-gradient(45deg, #e53e3e, #c53030); width: 100%;">🔄 New Game</button>
+                
+                <div class="called-numbers">
+                    <h3>📋 Called Numbers</h3>
+                    <div class="numbers-grid" id="calledNumbers">
+                        <!-- Called numbers will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="participant-area" id="participantArea" style="display: none;">
+            <div class="participant-game-layout">
+                <div class="bingo-card glass-card">
+                    <div class="card-header">
+                        <div class="letter">B</div>
+                        <div class="letter">I</div>
+                        <div class="letter">N</div>
+                        <div class="letter">G</div>
+                        <div class="letter">O</div>
+                    </div>
+                    <div class="bingo-grid" id="participantBingoGrid">
+                        <!-- Participant's bingo card will be generated here -->
+                    </div>
+                </div>
+                
+                <div class="controls glass-card">
+                    <div class="organizer-info">
+                        <span style="font-weight: 600;">🎮 Player Mode</span>
+                        <button onclick="logout()" class="logout-button">Logout</button>
+                    </div>
+                    
+                    <div class="current-number" id="participantCurrentNumber">?</div>
+                    
+                    <div class="approval-section" id="participantApprovalSection">
+                        <button class="premium-btn participant" id="requestCallButton" onclick="requestCall()" style="width: 100%; margin-bottom: 20px;">🎲 Request Next Call</button>
+                        <div id="waitingMessage" style="display: none; text-align: center; padding: 20px; background: rgba(255,215,0,0.2); border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(255,215,0,0.3);">
+                            <p style="margin: 0; color: #ffd700; font-weight: 600;">⏳ Awaiting master approval...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="called-numbers">
+                        <h3>📋 Called Numbers</h3>
+                        <div class="numbers-grid" id="participantCalledNumbers">
+                            <!-- Called numbers will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="participants-view" id="participantsView" style="display: none;">
+            <!-- Participant cards will be generated here -->
+        </div>
+    </div>
+    
+    <div class="win-message" id="winMessage">
+        🎉 BINGO! 🎉<br>
+        <small style="font-size: 1.2rem;">You Win!</small>
+    </div>
+
+    <script>
+        let bingoCard = [];
+        let calledNumbers = [];
+        let availableNumbers = [];
+        let gameWon = false;
+        let participants = [];
+        let realParticipants = [];
+        let currentView = 'organizer';
+        let userRole = null;
+        let currentParticipantName = null;
+        let gameWinner = null;
+        let pendingCallRequest = null;
+        let currentParticipantCard = [];
+        // Removed activity tracking - players only appear when logged in
+
+        // Load game data from localStorage
+        function loadGameData() {
+            try {
+                // Load participants
+                const savedParticipants = localStorage.getItem('bingoParticipants');
+                if (savedParticipants) {
+                    realParticipants = JSON.parse(savedParticipants);
+                    participants = [...realParticipants];
+                    console.log(`Loaded ${realParticipants.length} participants from storage`);
+                }
+                
+                // Load called numbers
+                const savedCalledNumbers = localStorage.getItem('bingoCalledNumbers');
+                if (savedCalledNumbers) {
+                    calledNumbers = JSON.parse(savedCalledNumbers);
+                    // Rebuild available numbers
+                    availableNumbers = [];
+                    for (let i = 1; i <= 25; i++) {
+                        if (!calledNumbers.includes(i)) {
+                            availableNumbers.push(i);
+                        }
+                    }
+                }
+                
+                // Load game state
+                const savedGameState = localStorage.getItem('bingoGameState');
+                if (savedGameState) {
+                    const gameState = JSON.parse(savedGameState);
+                    gameWon = gameState.gameWon || false;
+                    gameWinner = gameState.gameWinner || null;
+                    
+                    // Restore current number display
+                    if (gameState.currentNumber && gameState.currentNumber !== '?') {
+                        setTimeout(() => {
+                            const currentNumberElement = document.getElementById('currentNumber');
+                            if (currentNumberElement) {
+                                currentNumberElement.textContent = gameState.currentNumber;
+                            }
+                        }, 100);
+                    }
+                }
+                
+                console.log(`Game data loaded - Participants: ${realParticipants.length}, Called numbers: ${calledNumbers.length}, Game won: ${gameWon}`);
+            } catch (error) {
+                console.error('Error loading game data:', error);
+                // Reset to defaults if loading fails
+                realParticipants = [];
+                participants = [];
+                calledNumbers = [];
+                gameWon = false;
+                gameWinner = null;
+            }
+        }
+
+        // Save game state to localStorage
+        function saveGameState() {
+            try {
+                localStorage.setItem('bingoParticipants', JSON.stringify(realParticipants));
+                localStorage.setItem('bingoCalledNumbers', JSON.stringify(calledNumbers));
+                localStorage.setItem('bingoGameState', JSON.stringify({
+                    gameWon: gameWon,
+                    gameWinner: gameWinner,
+                    currentNumber: document.getElementById('currentNumber') ? document.getElementById('currentNumber').textContent : '?'
+                }));
+            } catch (error) {
+                console.error('Error saving game state:', error);
+            }
+        }
+
+        // Initialize the game
+        function initGame() {
+            if (userRole === 'organizer') {
+                generateParticipants();
+                const currentNumberElement = document.getElementById('currentNumber');
+                if (currentNumberElement && calledNumbers.length === 0) {
+                    currentNumberElement.textContent = '?';
+                }
+                updateParticipantCounts();
+                renderParticipants();
+                updateCalledNumbersDisplay();
+            } else if (userRole === 'participant') {
+                generateParticipantBingoCard();
+                document.getElementById('participantCurrentNumber').textContent = '?';
+                const requestButton = document.getElementById('requestCallButton');
+                if (requestButton) {
+                    requestButton.disabled = false;
+                }
+            }
+            
+            if (calledNumbers.length === 0) {
+                resetCalledNumbers();
+            }
+            
+            if (!gameWon) {
+                document.getElementById('winMessage').style.display = 'none';
+            }
+        }
+
+        // Generate participant cards
+        function generateParticipants() {
+            participants = [...realParticipants];
+            renderParticipants();
+        }
+
+        // Generate participant's own bingo card
+        function generateParticipantBingoCard() {
+            const grid = document.getElementById('participantBingoGrid');
+            grid.innerHTML = '';
+            currentParticipantCard = [];
+
+            // Generate numbers for each column
+            const columns = [
+                getRandomNumbers(1, 5, 5),    // B column
+                getRandomNumbers(6, 10, 5),   // I column
+                getRandomNumbers(11, 15, 5),  // N column
+                getRandomNumbers(16, 20, 5),  // G column
+                getRandomNumbers(21, 25, 5)   // O column
+            ];
+
+            // Create the 5x5 grid
+            for (let row = 0; row < 5; row++) {
+                currentParticipantCard[row] = [];
+                for (let col = 0; col < 5; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'bingo-cell';
+                    
+                    const number = columns[col][row];
+                    cell.textContent = number;
+                    currentParticipantCard[row][col] = { number: number, marked: false };
+                    
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        // Add a new real participant
+        function addParticipant(name) {
+            // Generate a unique card for this participant
+            const columns = [
+                getRandomNumbers(1, 5, 5),    // B column
+                getRandomNumbers(6, 10, 5),   // I column
+                getRandomNumbers(11, 15, 5),  // N column
+                getRandomNumbers(16, 20, 5),  // G column
+                getRandomNumbers(21, 25, 5)   // O column
+            ];
+
+            const participantCard = [];
+            for (let row = 0; row < 5; row++) {
+                participantCard[row] = [];
+                for (let col = 0; col < 5; col++) {
+                    const number = columns[col][row];
+                    participantCard[row][col] = { number: number, marked: false };
+                }
+            }
+
+            const participant = {
+                name: name,
+                card: participantCard,
+                hasWon: false,
+                isReal: true
+            };
+            
+            realParticipants.push(participant);
+            participants = [...realParticipants];
+            
+            // Store in localStorage for organizer access
+            localStorage.setItem('bingoParticipants', JSON.stringify(realParticipants));
+            localStorage.setItem('bingoCalledNumbers', JSON.stringify(calledNumbers));
+            localStorage.setItem('bingoGameState', JSON.stringify({
+                gameWon: gameWon,
+                gameWinner: gameWinner,
+                currentNumber: document.getElementById('currentNumber') ? document.getElementById('currentNumber').textContent : '?'
+            }));
+            
+            // Update participant count immediately for all organizers
+            updateParticipantCounts();
+            
+            // Notify all organizers about new participant
+            notifyOrganizers();
+            
+            console.log(`Added participant: ${name}. Total participants: ${realParticipants.length}`);
+        }
+
+        // Notify organizers of participant changes
+        function notifyOrganizers() {
+            // Update organizer displays immediately
+            updateParticipantCounts();
+            renderParticipants();
+            
+            // If organizer is in participants view, make sure it's visible
+            if (currentView === 'participants') {
+                document.getElementById('participantsView').style.display = 'grid';
+            }
+        }
+
+        // Activity tracking removed - players only appear when logged in
+
+        // Update participant counts display
+        function updateParticipantCounts() {
+            const totalCount = realParticipants.length;
+            
+            const countElement = document.getElementById('participantCount');
+            const activeElement = document.getElementById('activeCount');
+            
+            if (countElement) countElement.textContent = totalCount;
+            if (activeElement) activeElement.textContent = totalCount;
+        }
+
+        // Get random numbers for a column
+        function getRandomNumbers(min, max, count) {
+            const numbers = [];
+            const available = [];
+            
+            for (let i = min; i <= max; i++) {
+                available.push(i);
+            }
+            
+            for (let i = 0; i < count; i++) {
+                const randomIndex = Math.floor(Math.random() * available.length);
+                numbers.push(available.splice(randomIndex, 1)[0]);
+            }
+            
+            return numbers;
+        }
+
+        // Reset available numbers for calling
+        function resetCalledNumbers() {
+            availableNumbers = [];
+            for (let i = 1; i <= 25; i++) {
+                availableNumbers.push(i);
+            }
+            calledNumbers = [];
+            updateCalledNumbersDisplay();
+        }
+
+        // Request to call next number
+        function requestCall() {
+            if (gameWon || availableNumbers.length === 0) return;
+            
+            pendingCallRequest = currentParticipantName;
+            document.getElementById('requestCallButton').disabled = true;
+            document.getElementById('waitingMessage').style.display = 'block';
+            
+            // Always show the request to organizer (simulated notification system)
+            showCallRequest();
+        }
+
+        // Show call request to organizer
+        function showCallRequest() {
+            const participant = realParticipants.find(p => p.name === pendingCallRequest);
+            if (participant) {
+                document.getElementById('requestingParticipant').textContent = `${pendingCallRequest} wants to call next number`;
+                document.getElementById('requestingParticipant').style.opacity = '1';
+                document.getElementById('approvalButtons').style.display = 'block';
+                
+                // If organizer is currently viewing participants view, show notification there too
+                if (currentView === 'participants') {
+                    renderParticipants();
+                }
+            } else {
+                // Auto-deny requests from participants who have logged out
+                denyCall();
+            }
+        }
+
+        // Approve call request
+        function approveCall() {
+            if (pendingCallRequest) {
+                callNumber();
+                resetApprovalDisplay();
+                pendingCallRequest = null;
+                
+                // Reset participant UI
+                resetParticipantRequestUI();
+            }
+        }
+
+        // Deny call request
+        function denyCall() {
+            resetApprovalDisplay();
+            pendingCallRequest = null;
+            
+            // Reset participant UI
+            resetParticipantRequestUI();
+        }
+
+        // Reset approval display to default state
+        function resetApprovalDisplay() {
+            document.getElementById('requestingParticipant').textContent = 'No pending requests';
+            document.getElementById('requestingParticipant').style.opacity = '0.7';
+            document.getElementById('approvalButtons').style.display = 'none';
+        }
+
+        // Reset participant request UI
+        function resetParticipantRequestUI() {
+            if (document.getElementById('requestCallButton')) {
+                document.getElementById('requestCallButton').disabled = false;
+                document.getElementById('waitingMessage').style.display = 'none';
+            }
+        }
+
+        // Call a random number
+        function callNumber() {
+            if (availableNumbers.length === 0 || gameWon) return;
+
+            const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+            const number = availableNumbers.splice(randomIndex, 1)[0];
+            calledNumbers.push(number);
+
+            if (userRole === 'organizer') {
+                document.getElementById('currentNumber').textContent = number;
+            } else if (userRole === 'participant') {
+                document.getElementById('participantCurrentNumber').textContent = number;
+            }
+            
+            updateCalledNumbersDisplay();
+            
+            // Auto-mark the called number on participant cards
+            autoMarkNumber(number);
+            
+            // Save game state after calling number
+            saveGameState();
+
+            if (availableNumbers.length === 0) {
+                const organizerCallButton = document.getElementById('organizerCallButton');
+                if (organizerCallButton) {
+                    organizerCallButton.disabled = true;
+                }
+            }
+        }
+
+        // Automatically mark a called number on participant cards
+        function autoMarkNumber(calledNumber) {
+            // Mark on all participant cards
+            participants.forEach(participant => {
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        if (participant.card[row][col].number === calledNumber) {
+                            participant.card[row][col].marked = true;
+                            checkParticipantWin(participant);
+                        }
+                    }
+                }
+            });
+            
+            // Mark on current participant's own card if they're playing
+            if (userRole === 'participant' && currentParticipantCard.length > 0) {
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        if (currentParticipantCard[row][col].number === calledNumber) {
+                            currentParticipantCard[row][col].marked = true;
+                            updateParticipantCellDisplay(row, col);
+                            checkCurrentParticipantWin();
+                        }
+                    }
+                }
+            }
+            
+            // Update participant display if in participants view
+            if (currentView === 'participants') {
+                renderParticipants();
+            }
+        }
+
+        // Render participant cards
+        function renderParticipants() {
+            const container = document.getElementById('participantsView');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            console.log(`Rendering participants. Total: ${realParticipants.length}`);
+            
+            // If no participants, show a message
+            if (realParticipants.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'glass-card';
+                emptyMessage.style.padding = '40px';
+                emptyMessage.style.textAlign = 'center';
+                emptyMessage.style.gridColumn = '1 / -1';
+                emptyMessage.innerHTML = '<h3 style="color: #ffd700; margin: 0;">👥 No Players Yet</h3><p style="margin: 10px 0 0 0; opacity: 0.8;">Players will appear here when they join the game</p>';
+                container.appendChild(emptyMessage);
+                return;
+            }
+            
+            realParticipants.forEach(participant => {
+                const card = document.createElement('div');
+                card.className = 'participant-card glass-card';
+                
+                const header = document.createElement('div');
+                header.className = 'participant-header';
+                
+                const statusIcon = '🟢';
+                const winnerText = participant.hasWon ? ' 🏆 K2 STAR!' : '';
+                const requestText = (pendingCallRequest === participant.name) ? ' 📞 REQUESTING' : '';
+                
+                header.textContent = `${statusIcon} ${participant.name}${winnerText}${requestText}`;
+                card.appendChild(header);
+                
+                const bingoHeader = document.createElement('div');
+                bingoHeader.className = 'card-header';
+                bingoHeader.style.marginBottom = '10px';
+                ['B', 'I', 'N', 'G', 'O'].forEach(letter => {
+                    const letterDiv = document.createElement('div');
+                    letterDiv.className = 'letter';
+                    letterDiv.style.padding = '10px';
+                    letterDiv.style.fontSize = '1rem';
+                    letterDiv.textContent = letter;
+                    bingoHeader.appendChild(letterDiv);
+                });
+                card.appendChild(bingoHeader);
+                
+                const grid = document.createElement('div');
+                grid.className = 'participant-grid';
+                
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'participant-cell';
+                        cell.textContent = participant.card[row][col].number;
+                        
+                        if (participant.card[row][col].marked) {
+                            cell.classList.add('marked');
+                        }
+                        
+                        if (participant.hasWon) {
+                            cell.classList.add('winner');
+                        }
+                        
+                        grid.appendChild(cell);
+                    }
+                }
+                
+                card.appendChild(grid);
+                container.appendChild(card);
+            });
+        }
+
+        // Check if participant has won
+        function checkParticipantWin(participant) {
+            if (participant.hasWon || gameWinner) return;
+            
+            const card = participant.card;
+            let hasWon = false;
+            
+            // Check rows
+            for (let row = 0; row < 5; row++) {
+                if (card[row].every(cell => cell.marked)) {
+                    hasWon = true;
+                    break;
+                }
+            }
+
+            // Check columns
+            if (!hasWon) {
+                for (let col = 0; col < 5; col++) {
+                    if (card.every(row => row[col].marked)) {
+                        hasWon = true;
+                        break;
+                    }
+                }
+            }
+
+            // Check diagonals
+            if (!hasWon) {
+                if (card.every((row, index) => row[index].marked) ||
+                    card.every((row, index) => row[4 - index].marked)) {
+                    hasWon = true;
+                }
+            }
+
+            if (hasWon && !gameWinner) {
+                participant.hasWon = true;
+                gameWinner = participant.name;
+                showWinMessage(participant.name);
+                gameWon = true;
+                const organizerCallButton = document.getElementById('organizerCallButton');
+                if (organizerCallButton) {
+                    organizerCallButton.disabled = true;
+                }
+            }
+        }
+
+        // Update the display of called numbers
+        function updateCalledNumbersDisplay() {
+            const organizerContainer = document.getElementById('calledNumbers');
+            const participantContainer = document.getElementById('participantCalledNumbers');
+            
+            [organizerContainer, participantContainer].forEach(container => {
+                if (container) {
+                    container.innerHTML = '';
+                    calledNumbers.forEach(number => {
+                        const div = document.createElement('div');
+                        div.className = 'called-number';
+                        div.textContent = number;
+                        container.appendChild(div);
+                    });
+                }
+            });
+        }
+
+        // Update participant's own cell display
+        function updateParticipantCellDisplay(row, col) {
+            const cellIndex = row * 5 + col;
+            const cellElement = document.getElementById('participantBingoGrid').children[cellIndex];
+            
+            if (currentParticipantCard[row][col].marked) {
+                cellElement.classList.add('marked');
+            } else {
+                cellElement.classList.remove('marked');
+            }
+        }
+
+        // Check if current participant has won
+        function checkCurrentParticipantWin() {
+            if (gameWinner) return;
+            
+            const card = currentParticipantCard;
+            let hasWon = false;
+            
+            // Check rows
+            for (let row = 0; row < 5; row++) {
+                if (card[row].every(cell => cell.marked)) {
+                    hasWon = true;
+                    break;
+                }
+            }
+
+            // Check columns
+            if (!hasWon) {
+                for (let col = 0; col < 5; col++) {
+                    if (card.every(row => row[col].marked)) {
+                        hasWon = true;
+                        break;
+                    }
+                }
+            }
+
+            // Check diagonals
+            if (!hasWon) {
+                if (card.every((row, index) => row[index].marked) ||
+                    card.every((row, index) => row[4 - index].marked)) {
+                    hasWon = true;
+                }
+            }
+
+            if (hasWon && !gameWinner) {
+                gameWinner = currentParticipantName;
+                showWinMessage(currentParticipantName);
+                gameWon = true;
+                if (document.getElementById('requestCallButton')) {
+                    document.getElementById('requestCallButton').disabled = true;
+                }
+            }
+        }
+
+        // Show win message with participant name
+        function showWinMessage(winnerName) {
+            const winMessage = document.getElementById('winMessage');
+            winMessage.innerHTML = `🎉 BINGO! 🎉<br><small style="font-size: 1.2rem;">${winnerName} is the K2 STAR Winner! ⭐</small>`;
+            winMessage.style.display = 'block';
+            
+            // Also announce in current number display
+            if (userRole === 'organizer') {
+                document.getElementById('currentNumber').textContent = 'K2⭐';
+                document.getElementById('currentNumber').style.background = 'linear-gradient(45deg, #ffd700, #ffed4e)';
+                document.getElementById('currentNumber').style.color = '#333';
+            } else if (userRole === 'participant') {
+                document.getElementById('participantCurrentNumber').textContent = 'K2⭐';
+                document.getElementById('participantCurrentNumber').style.background = 'linear-gradient(45deg, #ffd700, #ffed4e)';
+                document.getElementById('participantCurrentNumber').style.color = '#333';
+            }
+            
+            setTimeout(() => {
+                winMessage.style.display = 'none';
+            }, 8000);
+        }
+
+        // Reset the entire game
+        function resetGame() {
+            gameWinner = null;
+            pendingCallRequest = null;
+            resetApprovalDisplay();
+            
+            realParticipants.forEach(participant => {
+                participant.hasWon = false;
+                // Reset all marked cells
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        participant.card[row][col].marked = false;
+                    }
+                }
+            });
+            
+            // Reset current participant's card
+            if (currentParticipantCard.length > 0) {
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        currentParticipantCard[row][col].marked = false;
+                        updateParticipantCellDisplay(row, col);
+                    }
+                }
+            }
+            
+            // Reset participant UI elements
+            const requestButton = document.getElementById('requestCallButton');
+            const waitingMessage = document.getElementById('waitingMessage');
+            const organizerCallButton = document.getElementById('organizerCallButton');
+            if (requestButton) requestButton.disabled = false;
+            if (waitingMessage) waitingMessage.style.display = 'none';
+            if (organizerCallButton) organizerCallButton.disabled = false;
+            
+            // Reset current number displays
+            const currentNumberElements = ['currentNumber', 'participantCurrentNumber'];
+            currentNumberElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = '?';
+                    element.style.background = 'linear-gradient(45deg, #ffd700, #ffed4e)';
+                    element.style.color = '#333';
+                }
+            });
+            
+            // Clear saved game state but keep participants
+            gameWon = false;
+            calledNumbers = [];
+            saveGameState();
+            
+            initGame();
+        }
+
+        // Show login screen for selected role
+        function showLogin(role) {
+            document.getElementById('roleSelection').style.display = 'none';
+            if (role === 'organizer') {
+                document.getElementById('organizerLogin').style.display = 'flex';
+            } else {
+                document.getElementById('participantLogin').style.display = 'flex';
+            }
+        }
+
+        // Back to role selection
+        function backToRoleSelection() {
+            document.getElementById('organizerLogin').style.display = 'none';
+            document.getElementById('participantLogin').style.display = 'none';
+            document.getElementById('roleSelection').style.display = 'flex';
+        }
+
+        // Switch between organizer and participants view (for organizer only)
+        function switchView(view) {
+            if (userRole !== 'organizer') return;
+            
+            currentView = view;
+            const toggleBtns = document.querySelectorAll('.toggle-btn');
+            toggleBtns.forEach(btn => btn.classList.remove('active'));
+            
+            if (view === 'organizer') {
+                document.getElementById('organizerArea').style.display = 'block';
+                document.getElementById('participantsView').style.display = 'none';
+                toggleBtns[0].classList.add('active');
+            } else {
+                document.getElementById('organizerArea').style.display = 'none';
+                document.getElementById('participantsView').style.display = 'grid';
+                toggleBtns[1].classList.add('active');
+                // Always refresh the participants view when switching to it
+                renderParticipants();
+                console.log(`Switching to participants view. Current participants: ${realParticipants.length}`);
+            }
+        }
+
+        // Organizer OTP verification
+        function verifyOrganizerOTP() {
+            const otpInput = document.getElementById('organizerOtpInput');
+            const enteredOTP = otpInput.value;
+            
+            if (enteredOTP === '9999') {
+                userRole = 'organizer';
+                currentView = 'organizer';
+                
+                // Load existing game data from localStorage
+                loadGameData();
+                
+                document.getElementById('organizerLogin').style.display = 'none';
+                document.getElementById('viewToggle').style.display = 'flex';
+                document.getElementById('organizerArea').style.display = 'block';
+                document.getElementById('participantsView').style.display = 'none';
+                
+                // Set correct toggle button as active
+                const toggleBtns = document.querySelectorAll('.toggle-btn');
+                toggleBtns.forEach(btn => btn.classList.remove('active'));
+                toggleBtns[0].classList.add('active');
+                
+                initGame();
+            } else {
+                showError(otpInput);
+            }
+        }
+
+        // Participant OTP verification
+        function verifyParticipantOTP() {
+            const nameInput = document.getElementById('participantNameInput');
+            const otpInput = document.getElementById('participantOtpInput');
+            const enteredName = nameInput.value.trim();
+            const enteredOTP = otpInput.value;
+            
+            if (!enteredName) {
+                showError(nameInput);
+                nameInput.placeholder = 'Please enter your name';
+                return;
+            }
+            
+            // Check if name already exists
+            if (realParticipants.some(p => p.name === enteredName)) {
+                showError(nameInput);
+                nameInput.placeholder = 'Name already taken';
+                nameInput.value = '';
+                return;
+            }
+            
+            if (enteredOTP === '5555') {
+                currentParticipantName = enteredName;
+                userRole = 'participant';
+                
+                document.getElementById('participantLogin').style.display = 'none';
+                document.getElementById('participantArea').style.display = 'block';
+                
+                // Add participant to the game immediately
+                addParticipant(enteredName);
+                
+                // Initialize participant's own game
+                initGame();
+            } else {
+                showError(otpInput);
+            }
+        }
+
+        // Show error for invalid OTP
+        function showError(otpInput) {
+            otpInput.style.borderColor = '#e53e3e';
+            otpInput.style.background = 'rgba(229, 62, 62, 0.1)';
+            setTimeout(() => {
+                otpInput.style.borderColor = 'rgba(255,255,255,0.2)';
+                otpInput.style.background = 'rgba(255,255,255,0.1)';
+            }, 2000);
+            otpInput.value = '';
+            otpInput.placeholder = 'Invalid code';
+        }
+
+        // Logout function
+        function logout() {
+            // If participant is logging out, remove them from the participants list
+            if (userRole === 'participant' && currentParticipantName) {
+                removeParticipant(currentParticipantName);
+                currentParticipantName = null;
+            }
+            
+            // Hide all game areas
+            document.getElementById('organizerArea').style.display = 'none';
+            document.getElementById('participantArea').style.display = 'none';
+            document.getElementById('participantsView').style.display = 'none';
+            document.getElementById('viewToggle').style.display = 'none';
+            document.getElementById('roleSelection').style.display = 'flex';
+            
+            // Clear input fields
+            document.getElementById('organizerOtpInput').value = '';
+            document.getElementById('organizerOtpInput').placeholder = 'Enter 4-digit code';
+            document.getElementById('participantNameInput').value = '';
+            document.getElementById('participantNameInput').placeholder = 'Enter your name';
+            document.getElementById('participantOtpInput').value = '';
+            document.getElementById('participantOtpInput').placeholder = 'Enter 4-digit code';
+            
+            // Reset global variables
+            userRole = null;
+            currentView = 'organizer';
+            
+            // Clear any pending requests
+            if (pendingCallRequest) {
+                denyCall();
+            }
+        }
+
+        // Remove a participant from the game
+        function removeParticipant(participantName) {
+            // Remove from realParticipants array
+            realParticipants = realParticipants.filter(p => p.name !== participantName);
+            participants = [...realParticipants];
+            
+            // Save updated participant list
+            saveGameState();
+            
+            // Clear any pending call requests from this participant
+            if (pendingCallRequest === participantName) {
+                denyCall();
+            }
+            
+            // Update participant counts
+            updateParticipantCounts();
+            
+            // Update organizer view if they're viewing participants
+            if (currentView === 'participants') {
+                renderParticipants();
+            }
+            
+            console.log(`Removed participant: ${participantName}. Remaining participants: ${realParticipants.length}`);
+        }
+
+        // Allow Enter key to verify OTP
+        document.addEventListener('DOMContentLoaded', function() {
+            const organizerOtpInput = document.getElementById('organizerOtpInput');
+            organizerOtpInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    verifyOrganizerOTP();
+                }
+            });
+
+            const participantNameInput = document.getElementById('participantNameInput');
+            participantNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('participantOtpInput').focus();
+                }
+            });
+
+            const participantOtpInput = document.getElementById('participantOtpInput');
+            participantOtpInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    verifyParticipantOTP();
+                }
+            });
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98b5daa0802ab4d0',t:'MTc1OTkyODc3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
