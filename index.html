@@ -162,6 +162,12 @@
             box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
 
+        .premium-btn:disabled {
+            cursor: not-allowed;
+            filter: grayscale(50%);
+            opacity: 0.7;
+        }
+
         .premium-btn::before {
             content: '';
             position: absolute;
@@ -571,7 +577,7 @@
 
         .numbers-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
             gap: 8px;
         }
 
@@ -787,7 +793,7 @@
                 
                 <div class="controls glass-card">
                     <div class="organizer-info">
-                        <span style="font-weight: 600;">🎮 Player Mode</span>
+                        <span style="font-weight: 600;">🎮 Player: <span id="playerNameDisplay"></span></span>
                         <button onclick="logout()" class="logout-button">Logout</button>
                     </div>
                     
@@ -819,670 +825,316 @@
     </div>
 
     <script>
-        let bingoCard = [];
-        let calledNumbers = [];
+        // --- START: NEW/IMPROVED CODE ---
+
+        // Constants for localStorage keys
+        const BINGO_PARTICIPANTS_KEY = 'bingoParticipants';
+        const BINGO_CALLED_NUMBERS_KEY = 'bingoCalledNumbers';
+        const BINGO_GAME_STATE_KEY = 'bingoGameState';
+        const BINGO_CALL_REQUEST_KEY = 'bingoCallRequest';
+        const BINGO_ACTIVE_SESSIONS_KEY = 'bingoActiveSessions';
+
+        // Global state variables
         let availableNumbers = [];
-        let gameWon = false;
-        let participants = [];
-        let realParticipants = [];
-        let currentView = 'organizer';
         let userRole = null;
         let currentParticipantName = null;
-        let gameWinner = null;
-        let pendingCallRequest = null;
         let currentParticipantCard = [];
-        // Removed activity tracking - players only appear when logged in
+        let currentView = 'organizer';
+
+        // Intervals for session management
+        let heartbeatInterval = null;
+        let sessionCheckInterval = null;
+
+        // --- END: NEW/IMPROVED CODE ---
 
         // Load game data from localStorage
-        function loadGameData() {
-            try {
-                // Load participants
-                const savedParticipants = localStorage.getItem('bingoParticipants');
-                if (savedParticipants) {
-                    realParticipants = JSON.parse(savedParticipants);
-                    participants = [...realParticipants];
-                    console.log(`Loaded ${realParticipants.length} participants from storage`);
-                }
-                
-                // Load called numbers
-                const savedCalledNumbers = localStorage.getItem('bingoCalledNumbers');
-                if (savedCalledNumbers) {
-                    calledNumbers = JSON.parse(savedCalledNumbers);
-                    // Rebuild available numbers
-                    availableNumbers = [];
-                    for (let i = 1; i <= 25; i++) {
-                        if (!calledNumbers.includes(i)) {
-                            availableNumbers.push(i);
-                        }
-                    }
-                } else {
-                    // Initialize available numbers if no called numbers are saved
-                    resetCalledNumbers();
-                }
-                
-                // Load game state
-                const savedGameState = localStorage.getItem('bingoGameState');
-                if (savedGameState) {
-                    const gameState = JSON.parse(savedGameState);
-                    gameWon = gameState.gameWon || false;
-                    gameWinner = gameState.gameWinner || null;
-                    
-                    // The actual current number is handled after login/initGame to ensure elements exist
-                }
-                
-                console.log(`Game data loaded - Participants: ${realParticipants.length}, Called numbers: ${calledNumbers.length}, Game won: ${gameWon}`);
-            } catch (error) {
-                console.error('Error loading game data:', error);
-                // Reset to defaults if loading fails or data is corrupted
-                realParticipants = [];
-                participants = [];
-                calledNumbers = [];
-                resetCalledNumbers(); // Re-initialize availableNumbers
-                gameWon = false;
-                gameWinner = null;
-            }
+        function getGameData() {
+            const participants = JSON.parse(localStorage.getItem(BINGO_PARTICIPANTS_KEY) || '[]');
+            const calledNumbers = JSON.parse(localStorage.getItem(BINGO_CALLED_NUMBERS_KEY) || '[]');
+            const gameState = JSON.parse(localStorage.getItem(BINGO_GAME_STATE_KEY) || '{}');
+            return { participants, calledNumbers, gameState };
         }
 
         // Save game state to localStorage
-        function saveGameState() {
-            try {
-                localStorage.setItem('bingoParticipants', JSON.stringify(realParticipants));
-                localStorage.setItem('bingoCalledNumbers', JSON.stringify(calledNumbers));
-                localStorage.setItem('bingoGameState', JSON.stringify({
-                    gameWon: gameWon,
-                    gameWinner: gameWinner,
-                    // Ensure we save the content of the current number element
-                    currentNumber: document.getElementById('currentNumber') ? document.getElementById('currentNumber').textContent : '?'
-                }));
-            } catch (error) {
-                console.error('Error saving game state:', error);
-            }
+        function saveGameState(participants, calledNumbers, gameState) {
+            localStorage.setItem(BINGO_PARTICIPANTS_KEY, JSON.stringify(participants));
+            localStorage.setItem(BINGO_CALLED_NUMBERS_KEY, JSON.stringify(calledNumbers));
+            localStorage.setItem(BINGO_GAME_STATE_KEY, JSON.stringify(gameState));
         }
 
-        // Initialize the game
-        function initGame() {
+        function syncGameState() {
+            const data = getGameData();
+            
+            // Rebuild available numbers
+            availableNumbers = [];
+            for (let i = 1; i <= 25; i++) {
+                if (!data.calledNumbers.includes(i)) {
+                    availableNumbers.push(i);
+                }
+            }
+
+            // Update UI for both roles
+            updateCalledNumbersDisplay(data.calledNumbers);
+            updateParticipantCounts(data.participants);
+
+            const currentNumber = data.gameState.gameWinner ? 'K2⭐' : data.gameState.currentNumber || '?';
+            const isWinner = !!data.gameState.gameWinner;
+
+            if (document.getElementById('currentNumber')) {
+                updateCurrentNumberDisplay('currentNumber', currentNumber, isWinner);
+            }
+            if (document.getElementById('participantCurrentNumber')) {
+                updateCurrentNumberDisplay('participantCurrentNumber', currentNumber, isWinner);
+            }
+
+            // Role-specific UI updates
             if (userRole === 'organizer') {
-                // Ensure the list reflects the loaded state
-                participants = [...realParticipants];
-                updateParticipantCounts();
-                renderParticipants();
-                updateCalledNumbersDisplay();
-                // Enable call button if game isn't won and there are numbers left
-                const organizerCallButton = document.getElementById('organizerCallButton');
-                if (organizerCallButton) {
-                    organizerCallButton.disabled = gameWon || availableNumbers.length === 0;
-                }
+                document.getElementById('organizerCallButton').disabled = data.gameState.gameWon || availableNumbers.length === 0;
+                renderParticipants(data.participants, data.gameState.gameWinner);
             } else if (userRole === 'participant') {
-                // Participant logic doesn't need to generate a new card if the participant logs out and back in.
-                // However, since we don't store participant cards locally on their device yet, 
-                // we keep the generation for now but this part would need to be updated in a real application.
-                generateParticipantBingoCard();
-                document.getElementById('participantCurrentNumber').textContent = document.getElementById('currentNumber') ? document.getElementById('currentNumber').textContent : '?';
-                const requestButton = document.getElementById('requestCallButton');
-                if (requestButton) {
-                    requestButton.disabled = gameWon;
-                }
-                updateCalledNumbersDisplay();
+                document.getElementById('requestCallButton').disabled = data.gameState.gameWon || availableNumbers.length === 0;
+                generateParticipantBingoCard(); // Regenerate card to show marked numbers
             }
             
-            if (!gameWon) {
-                document.getElementById('winMessage').style.display = 'none';
+            if (data.gameState.gameWon && data.gameState.gameWinner) {
+                showWinMessage(data.gameState.gameWinner);
+            } else {
+                 document.getElementById('winMessage').style.display = 'none';
             }
-        }
-
-        // Generate participant cards
-        function generateParticipants() {
-            participants = [...realParticipants];
-            renderParticipants();
         }
 
         // Generate participant's own bingo card
         function generateParticipantBingoCard() {
             const grid = document.getElementById('participantBingoGrid');
+            if (!grid) return;
             grid.innerHTML = '';
-            currentParticipantCard = [];
-
-            // Attempt to find the participant's saved card if they are a real participant
-            const savedParticipant = realParticipants.find(p => p.name === currentParticipantName);
-            let cardToUse = null;
-
-            if (savedParticipant) {
-                cardToUse = savedParticipant.card;
-            } else {
-                // Generate new card if not found (first time login)
-                const columns = [
-                    getRandomNumbers(1, 5, 5),    // B column
-                    getRandomNumbers(6, 10, 5),   // I column
-                    getRandomNumbers(11, 15, 5),  // N column
-                    getRandomNumbers(16, 20, 5),  // G column
-                    getRandomNumbers(21, 25, 5)   // O column
-                ];
-
-                cardToUse = [];
-                for (let row = 0; row < 5; row++) {
-                    cardToUse[row] = [];
-                    for (let col = 0; col < 5; col++) {
-                        const number = columns[col][row];
-                        // Also mark the numbers that have already been called
-                        const isMarked = calledNumbers.includes(number);
-                        cardToUse[row][col] = { number: number, marked: isMarked };
-                    }
-                }
-            }
             
-            currentParticipantCard = cardToUse;
+            const { participants, calledNumbers } = getGameData();
+            const savedParticipant = participants.find(p => p.name === currentParticipantName);
 
-            // Create the 5x5 grid UI
+            if (!savedParticipant) return;
+            currentParticipantCard = savedParticipant.card;
+
             for (let row = 0; row < 5; row++) {
                 for (let col = 0; col < 5; col++) {
                     const cell = document.createElement('div');
                     cell.className = 'bingo-cell';
-                    
                     const cellData = currentParticipantCard[row][col];
                     cell.textContent = cellData.number;
-                    
-                    if (cellData.marked) {
+                    if (calledNumbers.includes(cellData.number)) {
                         cell.classList.add('marked');
                     }
-                    
                     grid.appendChild(cell);
                 }
             }
         }
-
-        // Add a new real participant
+        
+        // Add a new participant
         function addParticipant(name) {
-            // Check if name already exists (should be done in verification, but safety check here)
-            if (realParticipants.some(p => p.name === name)) {
-                 console.log(`Participant ${name} already exists. Skipping add.`);
-                 return;
-            }
-            
-            // Generate a unique card for this participant
-            const columns = [
-                getRandomNumbers(1, 5, 5),    // B column
-                getRandomNumbers(6, 10, 5),   // I column
-                getRandomNumbers(11, 15, 5),  // N column
-                getRandomNumbers(16, 20, 5),  // G column
-                getRandomNumbers(21, 25, 5)   // O column
-            ];
+            const { participants, calledNumbers, gameState } = getGameData();
+            if (participants.some(p => p.name === name)) return;
 
+            const columns = [
+                getRandomNumbers(1, 5, 5), getRandomNumbers(6, 10, 5),
+                getRandomNumbers(11, 15, 5), getRandomNumbers(16, 20, 5),
+                getRandomNumbers(21, 25, 5)
+            ];
             const participantCard = [];
             for (let row = 0; row < 5; row++) {
                 participantCard[row] = [];
                 for (let col = 0; col < 5; col++) {
-                    const number = columns[col][row];
-                    // Mark if already called
-                    const isMarked = calledNumbers.includes(number);
-                    participantCard[row][col] = { number: number, marked: isMarked };
+                    participantCard[row][col] = { number: columns[col][row] };
                 }
             }
             
-            // Check if the new card is a winning card immediately (in case the game is already in progress)
-            let hasWon = checkCardWinStatus(participantCard);
-
-            const participant = {
-                name: name,
-                card: participantCard,
-                hasWon: hasWon,
-                isReal: true
-            };
-            
-            realParticipants.push(participant);
-            participants = [...realParticipants];
-            
-            // If the game has already been won by someone else, this person is not the gameWinner
-            if (hasWon && !gameWinner) {
-                 gameWinner = name;
-                 gameWon = true;
-                 showWinMessage(name);
-            }
-
-            // Store in localStorage for organizer access
-            saveGameState();
-            
-            // Update participant count immediately for all organizers
-            updateParticipantCounts();
-            
-            // Notify all organizers about new participant
-            notifyOrganizers();
-            
-            console.log(`Added participant: ${name}. Total participants: ${realParticipants.length}`);
+            participants.push({ name: name, card: participantCard });
+            saveGameState(participants, calledNumbers, gameState);
         }
-        
-        // Helper function to check win status of a card without setting global gameWinner
-        function checkCardWinStatus(card) {
+
+        // Helper function to check win status of a card
+        function checkCardWinStatus(card, calledNumbers) {
+            const isMarked = (num) => calledNumbers.includes(num);
+
             // Check rows
             for (let row = 0; row < 5; row++) {
-                if (card[row].every(cell => cell.marked)) return true;
+                if (card[row].every(cell => isMarked(cell.number))) return true;
             }
-
             // Check columns
             for (let col = 0; col < 5; col++) {
-                if (card.every(row => row[col].marked)) return true;
+                if (card.every(row => isMarked(row[col].number))) return true;
             }
-
             // Check diagonals
-            if (card.every((row, index) => row[index].marked) ||
-                card.every((row, index) => row[4 - index].marked)) return true;
+            if (card.every((row, index) => isMarked(row[index].number)) ||
+                card.every((row, index) => isMarked(row[4 - index].number))) return true;
                 
             return false;
         }
 
-
-        // Notify organizers of participant changes
-        function notifyOrganizers() {
-            // Update organizer displays immediately
-            updateParticipantCounts();
-            renderParticipants();
-            
-            // If organizer is in participants view, make sure it's visible
-            if (currentView === 'participants') {
-                document.getElementById('participantsView').style.display = 'grid';
-            }
-        }
-
-        // Activity tracking removed - players only appear when logged in
-
         // Update participant counts display
-        function updateParticipantCounts() {
-            const totalCount = realParticipants.length;
-            
+        function updateParticipantCounts(participants) {
             const countElement = document.getElementById('participantCount');
-            const activeElement = document.getElementById('activeCount');
-            
-            if (countElement) countElement.textContent = totalCount;
-            if (activeElement) activeElement.textContent = totalCount;
+            if (countElement) countElement.textContent = participants.length;
         }
 
         // Get random numbers for a column
         function getRandomNumbers(min, max, count) {
-            const numbers = [];
-            const available = [];
-            
-            for (let i = min; i <= max; i++) {
-                available.push(i);
-            }
-            
+            const numbers = [], available = [];
+            for (let i = min; i <= max; i++) available.push(i);
             for (let i = 0; i < count; i++) {
                 const randomIndex = Math.floor(Math.random() * available.length);
                 numbers.push(available.splice(randomIndex, 1)[0]);
             }
-            
             return numbers;
         }
-
-        // Reset available numbers for calling
-        function resetCalledNumbers() {
-            availableNumbers = [];
-            for (let i = 1; i <= 25; i++) {
-                availableNumbers.push(i);
-            }
-            calledNumbers = [];
-            updateCalledNumbersDisplay();
-        }
-
+        
         // Request to call next number
         function requestCall() {
-            if (gameWon || availableNumbers.length === 0) return;
+            const { gameState } = getGameData();
+            if (gameState.gameWon || availableNumbers.length === 0) return;
             
-            pendingCallRequest = currentParticipantName;
+            localStorage.setItem(BINGO_CALL_REQUEST_KEY, JSON.stringify({ name: currentParticipantName }));
             document.getElementById('requestCallButton').disabled = true;
             document.getElementById('waitingMessage').style.display = 'block';
-            
-            // Always show the request to organizer (simulated notification system)
-            showCallRequest();
         }
 
         // Show call request to organizer
-        function showCallRequest() {
-            const participant = realParticipants.find(p => p.name === pendingCallRequest);
-            if (participant) {
-                document.getElementById('requestingParticipant').textContent = `${pendingCallRequest} wants to call next number`;
-                document.getElementById('requestingParticipant').style.opacity = '1';
-                document.getElementById('approvalButtons').style.display = 'block';
-                
-                // If organizer is currently viewing participants view, show notification there too
-                if (currentView === 'participants') {
-                    renderParticipants();
-                }
-            } else {
-                // Auto-deny requests from participants who have logged out
-                denyCall();
-            }
+        function showCallRequest(requestingName) {
+            document.getElementById('requestingParticipant').textContent = `${requestingName} wants to call the next number`;
+            document.getElementById('requestingParticipant').style.opacity = '1';
+            document.getElementById('approvalButtons').style.display = 'block';
         }
 
-        // Approve call request
         function approveCall() {
-            if (pendingCallRequest) {
-                callNumber();
-                resetApprovalDisplay();
-                pendingCallRequest = null;
-                
-                // Reset participant UI
-                resetParticipantRequestUI();
-            }
+            localStorage.removeItem(BINGO_CALL_REQUEST_KEY);
+            callNumber();
         }
 
-        // Deny call request
         function denyCall() {
-            resetApprovalDisplay();
-            pendingCallRequest = null;
-            
-            // Reset participant UI
-            resetParticipantRequestUI();
+            localStorage.removeItem(BINGO_CALL_REQUEST_KEY);
         }
 
-        // Reset approval display to default state
         function resetApprovalDisplay() {
             document.getElementById('requestingParticipant').textContent = 'No pending requests';
             document.getElementById('requestingParticipant').style.opacity = '0.7';
             document.getElementById('approvalButtons').style.display = 'none';
         }
 
-        // Reset participant request UI
         function resetParticipantRequestUI() {
+            const { gameState } = getGameData();
             if (document.getElementById('requestCallButton')) {
-                document.getElementById('requestCallButton').disabled = gameWon;
+                document.getElementById('requestCallButton').disabled = gameState.gameWon;
                 document.getElementById('waitingMessage').style.display = 'none';
             }
         }
 
-        // Call a random number
         function callNumber() {
-            if (availableNumbers.length === 0 || gameWon) return;
+            let { participants, calledNumbers, gameState } = getGameData();
+            if (gameState.gameWon || availableNumbers.length === 0) return;
 
             const randomIndex = Math.floor(Math.random() * availableNumbers.length);
             const number = availableNumbers.splice(randomIndex, 1)[0];
             calledNumbers.push(number);
 
-            // Update organizer display
-            const currentNumberOrg = document.getElementById('currentNumber');
-            if (currentNumberOrg) {
-                 currentNumberOrg.textContent = number;
-            }
+            gameState.currentNumber = number;
 
-            // Update participant display
-            const currentNumberPart = document.getElementById('participantCurrentNumber');
-            if (currentNumberPart) {
-                currentNumberPart.textContent = number;
-            }
-            
-            updateCalledNumbersDisplay();
-            
-            // Auto-mark the called number on participant cards
-            autoMarkNumber(number);
-            
-            // Save game state after calling number
-            saveGameState();
-
-            if (availableNumbers.length === 0) {
-                const organizerCallButton = document.getElementById('organizerCallButton');
-                if (organizerCallButton) {
-                    organizerCallButton.disabled = true;
-                }
-            }
-        }
-
-        // Automatically mark a called number on participant cards
-        function autoMarkNumber(calledNumber) {
-            let potentialNewWinner = null;
-            
-            // Mark on all participant cards
-            realParticipants.forEach(participant => {
-                let cardChanged = false;
-                if (participant.hasWon) return; // Skip already winning participants
-
-                for (let row = 0; row < 5; row++) {
-                    for (let col = 0; col < 5; col++) {
-                        if (participant.card[row][col].number === calledNumber) {
-                            participant.card[row][col].marked = true;
-                            cardChanged = true;
-                        }
-                    }
-                }
-                
-                if (cardChanged) {
-                    const hasWon = checkCardWinStatus(participant.card);
-                    if (hasWon) {
-                        participant.hasWon = true;
-                        if (!gameWinner) {
-                            potentialNewWinner = participant.name;
-                        }
+            // Check for winners
+            let newWinner = null;
+            participants.forEach(p => {
+                if (checkCardWinStatus(p.card, calledNumbers)) {
+                    if (!gameState.gameWinner) {
+                        newWinner = p.name;
                     }
                 }
             });
-            
-            if (potentialNewWinner && !gameWinner) {
-                gameWinner = potentialNewWinner;
-                showWinMessage(potentialNewWinner);
-                gameWon = true;
-                const organizerCallButton = document.getElementById('organizerCallButton');
-                if (organizerCallButton) {
-                    organizerCallButton.disabled = true;
-                }
-            }
 
-            // Mark on current participant's own card if they're playing
-            if (userRole === 'participant' && currentParticipantCard.length > 0) {
-                for (let row = 0; row < 5; row++) {
-                    for (let col = 0; col < 5; col++) {
-                        if (currentParticipantCard[row][col].number === calledNumber) {
-                            currentParticipantCard[row][col].marked = true;
-                            updateParticipantCellDisplay(row, col);
-                            checkCurrentParticipantWin();
-                        }
-                    }
-                }
+            if (newWinner) {
+                gameState.gameWinner = newWinner;
+                gameState.gameWon = true;
             }
             
-            // Update participant display if in participants view
-            if (currentView === 'participants') {
-                renderParticipants();
-            }
+            saveGameState(participants, calledNumbers, gameState);
         }
 
-        // Render participant cards
-        function renderParticipants() {
+        function renderParticipants(participants, gameWinner) {
             const container = document.getElementById('participantsView');
             if (!container) return;
-            
             container.innerHTML = '';
             
-            console.log(`Rendering participants. Total: ${realParticipants.length}`);
-            
-            // If no participants, show a message
-            if (realParticipants.length === 0) {
-                const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'glass-card';
-                emptyMessage.style.padding = '40px';
-                emptyMessage.style.textAlign = 'center';
-                emptyMessage.style.gridColumn = '1 / -1';
-                emptyMessage.innerHTML = '<h3 style="color: #ffd700; margin: 0;">👥 No Players Yet</h3><p style="margin: 10px 0 0 0; opacity: 0.8;">Players will appear here when they join the game</p>';
-                container.appendChild(emptyMessage);
+            if (participants.length === 0) {
+                container.innerHTML = `<div class="glass-card" style="padding: 40px; text-align: center; grid-column: 1 / -1;">
+                                         <h3 style="color: #ffd700; margin: 0;">👥 No Players Online</h3>
+                                         <p style="margin: 10px 0 0 0; opacity: 0.8;">Players will appear here when they join the game.</p>
+                                       </div>`;
                 return;
             }
             
-            realParticipants.forEach(participant => {
+            const { calledNumbers } = getGameData();
+            const callRequest = JSON.parse(localStorage.getItem(BINGO_CALL_REQUEST_KEY) || 'null');
+            
+            participants.forEach(participant => {
                 const card = document.createElement('div');
                 card.className = 'participant-card glass-card';
-                
-                const header = document.createElement('div');
-                header.className = 'participant-header';
-                
-                const statusIcon = '🟢';
-                const winnerText = participant.hasWon ? ' 🏆 K2 STAR!' : '';
-                const requestText = (pendingCallRequest === participant.name) ? ' 📞 REQUESTING' : '';
-                
-                header.textContent = `${statusIcon} ${participant.name}${winnerText}${requestText}`;
-                card.appendChild(header);
-                
-                const bingoHeader = document.createElement('div');
-                bingoHeader.className = 'card-header';
-                bingoHeader.style.marginBottom = '10px';
-                ['B', 'I', 'N', 'G', 'O'].forEach(letter => {
-                    const letterDiv = document.createElement('div');
-                    letterDiv.className = 'letter';
-                    letterDiv.style.padding = '10px';
-                    letterDiv.style.fontSize = '1rem';
-                    letterDiv.textContent = letter;
-                    bingoHeader.appendChild(letterDiv);
-                });
-                card.appendChild(bingoHeader);
-                
-                const grid = document.createElement('div');
-                grid.className = 'participant-grid';
-                
-                for (let row = 0; row < 5; row++) {
-                    for (let col = 0; col < 5; col++) {
-                        const cell = document.createElement('div');
-                        cell.className = 'participant-cell';
-                        cell.textContent = participant.card[row][col].number;
-                        
-                        if (participant.card[row][col].marked) {
-                            cell.classList.add('marked');
-                        }
-                        
-                        if (participant.hasWon) {
-                            cell.classList.add('winner');
-                        }
-                        
-                        grid.appendChild(cell);
-                    }
-                }
-                
-                card.appendChild(grid);
+                const hasWon = gameWinner === participant.name;
+                const isRequesting = callRequest && callRequest.name === participant.name;
+
+                card.innerHTML = `
+                    <div class="participant-header">
+                        🟢 ${participant.name}
+                        ${hasWon ? ' 🏆 K2 STAR!' : ''}
+                        ${isRequesting ? ' 📞 REQUESTING' : ''}
+                    </div>
+                    <div class="participant-grid">
+                        ${participant.card.flat().map(cell => `
+                            <div class="participant-cell ${calledNumbers.includes(cell.number) ? 'marked' : ''} ${hasWon ? 'winner' : ''}">
+                                ${cell.number}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
                 container.appendChild(card);
             });
         }
 
-        // Check if current participant has won
-        function checkCurrentParticipantWin() {
-            if (gameWinner) return;
-            
-            const card = currentParticipantCard;
-            let hasWon = checkCardWinStatus(card);
-
-            if (hasWon && !gameWinner) {
-                gameWinner = currentParticipantName;
-                showWinMessage(currentParticipantName);
-                gameWon = true;
-                if (document.getElementById('requestCallButton')) {
-                    document.getElementById('requestCallButton').disabled = true;
-                }
-            }
-        }
-
-        // Update the display of called numbers
-        function updateCalledNumbersDisplay() {
-            const organizerContainer = document.getElementById('calledNumbers');
-            const participantContainer = document.getElementById('participantCalledNumbers');
-            
-            [organizerContainer, participantContainer].forEach(container => {
+        function updateCalledNumbersDisplay(calledNumbers) {
+            const containers = [document.getElementById('calledNumbers'), document.getElementById('participantCalledNumbers')];
+            containers.forEach(container => {
                 if (container) {
-                    container.innerHTML = '';
-                    calledNumbers.forEach(number => {
-                        const div = document.createElement('div');
-                        div.className = 'called-number';
-                        div.textContent = number;
-                        container.appendChild(div);
-                    });
+                    container.innerHTML = calledNumbers.map(n => `<div class="called-number">${n}</div>`).join('');
                 }
             });
         }
 
-        // Update participant's own cell display
-        function updateParticipantCellDisplay(row, col) {
-            const cellIndex = row * 5 + col;
-            const cellElement = document.getElementById('participantBingoGrid').children[cellIndex];
-            
-            if (currentParticipantCard[row][col].marked) {
-                cellElement.classList.add('marked');
+        function updateCurrentNumberDisplay(elementId, text, isWinner) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            element.textContent = text;
+            if (isWinner) {
+                element.style.background = 'linear-gradient(45deg, #ffd700, #ffed4e)';
+                element.style.color = '#333';
             } else {
-                cellElement.classList.remove('marked');
+                element.style.background = '';
+                element.style.color = '';
             }
         }
-
-        // Show win message with participant name
+        
         function showWinMessage(winnerName) {
             const winMessage = document.getElementById('winMessage');
             winMessage.innerHTML = `🎉 BINGO! 🎉<br><small style="font-size: 1.2rem;">${winnerName} is the K2 STAR Winner! ⭐</small>`;
             winMessage.style.display = 'block';
-            
-            // Also announce in current number display
-            const currentNumberElements = ['currentNumber', 'participantCurrentNumber'];
-            currentNumberElements.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.textContent = 'K2⭐';
-                    element.style.background = 'linear-gradient(45deg, #ffd700, #ffed4e)';
-                    element.style.color = '#333';
-                }
-            });
-            
-            setTimeout(() => {
-                winMessage.style.display = 'none';
-            }, 8000);
         }
 
-        // Reset the entire game
         function resetGame() {
-            gameWinner = null;
-            pendingCallRequest = null;
-            resetApprovalDisplay();
-            
-            // Reset win status and marked cells for all participants
-            realParticipants.forEach(participant => {
-                participant.hasWon = false;
-                for (let row = 0; row < 5; row++) {
-                    for (let col = 0; col < 5; col++) {
-                        participant.card[row][col].marked = false;
-                    }
-                }
+            let { participants } = getGameData();
+            // Keep participants but reset game state
+            saveGameState(participants, [], {
+                gameWon: false,
+                gameWinner: null,
+                currentNumber: '?'
             });
-            
-            // Reset current participant's card
-            if (currentParticipantCard.length > 0) {
-                for (let row = 0; row < 5; row++) {
-                    for (let col = 0; col < 5; col++) {
-                        currentParticipantCard[row][col].marked = false;
-                        // Only update display if player is logged in
-                        if (userRole === 'participant') {
-                             updateParticipantCellDisplay(row, col);
-                        }
-                    }
-                }
-            }
-            
-            // Reset participant UI elements
-            const requestButton = document.getElementById('requestCallButton');
-            const waitingMessage = document.getElementById('waitingMessage');
-            const organizerCallButton = document.getElementById('organizerCallButton');
-            if (requestButton) requestButton.disabled = false;
-            if (waitingMessage) waitingMessage.style.display = 'none';
-            if (organizerCallButton) organizerCallButton.disabled = false;
-            
-            // Reset current number displays
-            const currentNumberElements = ['currentNumber', 'participantCurrentNumber'];
-            currentNumberElements.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.textContent = '?';
-                    element.style.background = ''; // Clear custom background
-                    element.style.color = ''; // Clear custom color
-                }
-            });
-            
-            // Clear saved game state but keep participants
-            gameWon = false;
-            calledNumbers = [];
-            resetCalledNumbers(); // Rebuild availableNumbers
-            saveGameState();
-            
-            initGame();
+            // Clear any pending call requests
+            localStorage.removeItem(BINGO_CALL_REQUEST_KEY);
         }
 
-        // Show login screen for selected role
         function showLogin(role) {
             document.getElementById('roleSelection').style.display = 'none';
             if (role === 'organizer') {
@@ -1492,17 +1144,14 @@
             }
         }
 
-        // Back to role selection
         function backToRoleSelection() {
             document.getElementById('organizerLogin').style.display = 'none';
             document.getElementById('participantLogin').style.display = 'none';
             document.getElementById('roleSelection').style.display = 'flex';
         }
 
-        // Switch between organizer and participants view (for organizer only)
         function switchView(view) {
             if (userRole !== 'organizer') return;
-            
             currentView = view;
             const toggleBtns = document.querySelectorAll('.toggle-btn');
             toggleBtns.forEach(btn => btn.classList.remove('active'));
@@ -1515,62 +1164,27 @@
                 document.getElementById('organizerArea').style.display = 'none';
                 document.getElementById('participantsView').style.display = 'grid';
                 toggleBtns[1].classList.add('active');
-                // Always refresh the participants view when switching to it
-                renderParticipants();
-                console.log(`Switching to participants view. Current participants: ${realParticipants.length}`);
+                syncGameState(); // Always refresh view
             }
         }
 
-        // Organizer OTP verification
         function verifyOrganizerOTP() {
             const otpInput = document.getElementById('organizerOtpInput');
-            const enteredOTP = otpInput.value;
-            
-            if (enteredOTP === '9999') {
+            if (otpInput.value === '9999') {
                 userRole = 'organizer';
                 currentView = 'organizer';
-                
-                // Load existing game data from localStorage
-                loadGameData();
                 
                 document.getElementById('organizerLogin').style.display = 'none';
                 document.getElementById('viewToggle').style.display = 'flex';
                 document.getElementById('organizerArea').style.display = 'block';
-                document.getElementById('participantsView').style.display = 'none';
                 
-                // Set correct toggle button as active
-                const toggleBtns = document.querySelectorAll('.toggle-btn');
-                toggleBtns.forEach(btn => btn.classList.remove('active'));
-                toggleBtns[0].classList.add('active');
-                
-                initGame();
-                
-                // FIX: Manually ensure current number is updated after initGame
-                // This resolves the issue of the 'currentNumber' box not reflecting the saved state.
-                const savedGameState = localStorage.getItem('bingoGameState');
-                if (savedGameState) {
-                    const gameState = JSON.parse(savedGameState);
-                    const currentNumberElement = document.getElementById('currentNumber');
-                    if (currentNumberElement) {
-                        currentNumberElement.textContent = gameState.currentNumber;
-                        // Restore winning display if applicable
-                        if (gameState.gameWinner) {
-                            currentNumberElement.textContent = 'K2⭐';
-                            currentNumberElement.style.background = 'linear-gradient(45deg, #ffd700, #ffed4e)';
-                            currentNumberElement.style.color = '#333';
-                        } else {
-                            // Re-apply original styles if not a winner
-                            currentNumberElement.style.background = ''; 
-                            currentNumberElement.style.color = '';
-                        }
-                    }
-                }
+                syncGameState();
+                startSessionChecker();
             } else {
                 showError(otpInput);
             }
         }
 
-        // Participant OTP verification
         function verifyParticipantOTP() {
             const nameInput = document.getElementById('participantNameInput');
             const otpInput = document.getElementById('participantOtpInput');
@@ -1578,18 +1192,13 @@
             const enteredOTP = otpInput.value;
             
             if (!enteredName) {
-                showError(nameInput);
-                nameInput.placeholder = 'Please enter your name';
+                showError(nameInput, 'Please enter your name');
                 return;
             }
             
-            // Load existing data first so we know who is already playing
-            loadGameData(); 
-
-            // Check if name already exists
-            if (realParticipants.some(p => p.name === enteredName)) {
-                showError(nameInput);
-                nameInput.placeholder = 'Name already taken';
+            const { participants } = getGameData();
+            if (participants.some(p => p.name.toLowerCase() === enteredName.toLowerCase())) {
+                showError(nameInput, 'Name already taken');
                 nameInput.value = '';
                 return;
             }
@@ -1600,127 +1209,149 @@
                 
                 document.getElementById('participantLogin').style.display = 'none';
                 document.getElementById('participantArea').style.display = 'block';
+                document.getElementById('playerNameDisplay').textContent = enteredName;
                 
-                // Add participant to the game immediately
                 addParticipant(enteredName);
-                
-                // Initialize participant's own game
-                initGame();
-                
-                // Sync current number display for participant
-                const currentNumberElement = document.getElementById('currentNumber');
-                if (currentNumberElement && document.getElementById('participantCurrentNumber')) {
-                    document.getElementById('participantCurrentNumber').textContent = currentNumberElement.textContent;
-                }
-                
-                // Check if the game is already won and show the message if this participant is the winner
-                if (gameWinner === currentParticipantName) {
-                    showWinMessage(currentParticipantName);
-                }
+                startParticipantSession(enteredName);
+                syncGameState();
+
             } else {
                 showError(otpInput);
             }
         }
 
-        // Show error for invalid OTP
-        function showError(otpInput) {
-            otpInput.style.borderColor = '#e53e3e';
-            otpInput.style.background = 'rgba(229, 62, 62, 0.1)';
+        function showError(inputElement, message = 'Invalid code') {
+            inputElement.style.borderColor = '#e53e3e';
+            inputElement.style.background = 'rgba(229, 62, 62, 0.1)';
             setTimeout(() => {
-                otpInput.style.borderColor = 'rgba(255,255,255,0.2)';
-                otpInput.style.background = 'rgba(255,255,255,0.1)';
+                inputElement.style.borderColor = 'rgba(255,255,255,0.2)';
+                inputElement.style.background = 'rgba(255,255,255,0.1)';
             }, 2000);
-            otpInput.value = '';
-            otpInput.placeholder = 'Invalid code';
+            inputElement.value = '';
+            inputElement.placeholder = message;
         }
 
-        // Logout function
         function logout() {
-            // If participant is logging out, remove them from the participants list
-            if (userRole === 'participant' && currentParticipantName) {
-                removeParticipant(currentParticipantName);
+            if (userRole === 'participant') {
+                endParticipantSession(currentParticipantName);
                 currentParticipantName = null;
+            } else if (userRole === 'organizer') {
+                stopSessionChecker();
             }
             
-            // Hide all game areas
+            userRole = null;
+            
             document.getElementById('organizerArea').style.display = 'none';
             document.getElementById('participantArea').style.display = 'none';
             document.getElementById('participantsView').style.display = 'none';
             document.getElementById('viewToggle').style.display = 'none';
             document.getElementById('roleSelection').style.display = 'flex';
             
-            // Clear input fields
             document.getElementById('organizerOtpInput').value = '';
-            document.getElementById('organizerOtpInput').placeholder = 'Enter 4-digit code';
             document.getElementById('participantNameInput').value = '';
-            document.getElementById('participantNameInput').placeholder = 'Enter your name';
             document.getElementById('participantOtpInput').value = '';
-            document.getElementById('participantOtpInput').placeholder = 'Enter 4-digit code';
-            
-            // Reset global variables
-            userRole = null;
-            currentView = 'organizer';
-            
-            // Clear any pending requests
-            if (pendingCallRequest) {
-                denyCall();
-            }
-            
-            // Ensure data is loaded on the next organizer login
-            loadGameData();
         }
 
-        // Remove a participant from the game
-        function removeParticipant(participantName) {
-            // Remove from realParticipants array
-            realParticipants = realParticipants.filter(p => p.name !== participantName);
-            participants = [...realParticipants];
-            
-            // Save updated participant list
-            saveGameState();
-            
-            // Clear any pending call requests from this participant
-            if (pendingCallRequest === participantName) {
-                denyCall();
-            }
-            
-            // Update participant counts
-            updateParticipantCounts();
-            
-            // Update organizer view if they're viewing participants
-            if (currentView === 'participants') {
-                renderParticipants();
-            }
-            
-            console.log(`Removed participant: ${participantName}. Remaining participants: ${realParticipants.length}`);
+        // --- START: NEW SESSION MANAGEMENT CODE ---
+
+        function startParticipantSession(name) {
+            heartbeatInterval = setInterval(() => {
+                let sessions = JSON.parse(localStorage.getItem(BINGO_ACTIVE_SESSIONS_KEY) || '[]');
+                let mySession = sessions.find(s => s.name === name);
+                if (mySession) {
+                    mySession.timestamp = Date.now();
+                } else {
+                    sessions.push({ name: name, timestamp: Date.now() });
+                }
+                localStorage.setItem(BINGO_ACTIVE_SESSIONS_KEY, JSON.stringify(sessions));
+            }, 5000); // Heartbeat every 5 seconds
+
+            window.addEventListener('beforeunload', () => endParticipantSession(name, false));
         }
 
+        function endParticipantSession(name, doFullLogout = true) {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+
+            let sessions = JSON.parse(localStorage.getItem(BINGO_ACTIVE_SESSIONS_KEY) || '[]');
+            sessions = sessions.filter(s => s.name !== name);
+            localStorage.setItem(BINGO_ACTIVE_SESSIONS_KEY, JSON.stringify(sessions));
+            
+            if (doFullLogout) {
+                removeParticipant(name);
+            }
+        }
+
+        function startSessionChecker() {
+            if (sessionCheckInterval) clearInterval(sessionCheckInterval);
+            sessionCheckInterval = setInterval(() => {
+                const sessions = JSON.parse(localStorage.getItem(BINGO_ACTIVE_SESSIONS_KEY) || '[]');
+                const { participants, calledNumbers, gameState } = getGameData();
+                const now = Date.now();
+                const INACTIVITY_THRESHOLD = 15000; // 15 seconds
+
+                const activeNames = sessions.filter(s => (now - s.timestamp) < INACTIVITY_THRESHOLD).map(s => s.name);
+                const updatedParticipants = participants.filter(p => activeNames.includes(p.name));
+                
+                if (updatedParticipants.length !== participants.length) {
+                    // Also clear call request if the requester disconnected
+                    const request = JSON.parse(localStorage.getItem(BINGO_CALL_REQUEST_KEY) || 'null');
+                    if (request && !activeNames.includes(request.name)) {
+                        localStorage.removeItem(BINGO_CALL_REQUEST_KEY);
+                    }
+                    saveGameState(updatedParticipants, calledNumbers, gameState);
+                }
+            }, 10000); // Check every 10 seconds
+        }
+        
+        function stopSessionChecker() {
+             if (sessionCheckInterval) clearInterval(sessionCheckInterval);
+             sessionCheckInterval = null;
+        }
+
+        function removeParticipant(name) {
+            const { participants, calledNumbers, gameState } = getGameData();
+            const updatedParticipants = participants.filter(p => p.name !== name);
+            saveGameState(updatedParticipants, calledNumbers, gameState);
+        }
+        
+        // --- END: NEW SESSION MANAGEMENT CODE ---
+
+        // Main event listener for cross-tab synchronization
+        window.addEventListener('storage', (e) => {
+            if ([BINGO_PARTICIPANTS_KEY, BINGO_CALLED_NUMBERS_KEY, BINGO_GAME_STATE_KEY].includes(e.key)) {
+                syncGameState();
+            }
+            
+            if (e.key === BINGO_CALL_REQUEST_KEY) {
+                const request = JSON.parse(localStorage.getItem(BINGO_CALL_REQUEST_KEY) || 'null');
+                if (userRole === 'organizer') {
+                    if (request) {
+                        showCallRequest(request.name);
+                    } else {
+                        resetApprovalDisplay();
+                    }
+                    // Re-render participants to show/hide "requesting" label
+                    const { participants, gameState } = getGameData();
+                    renderParticipants(participants, gameState.gameWinner);
+                }
+                if (userRole === 'participant' && !request) {
+                    resetParticipantRequestUI();
+                }
+            }
+        });
+        
         // Allow Enter key to verify OTP
         document.addEventListener('DOMContentLoaded', function() {
-            // Pre-load data on page load so participant list is ready for new players
-            loadGameData();
-            
             const organizerOtpInput = document.getElementById('organizerOtpInput');
-            organizerOtpInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    verifyOrganizerOTP();
-                }
-            });
-
+            organizerOtpInput.addEventListener('keypress', (e) => e.key === 'Enter' && verifyOrganizerOTP());
+            
             const participantNameInput = document.getElementById('participantNameInput');
-            participantNameInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('participantOtpInput').focus();
-                }
-            });
+            participantNameInput.addEventListener('keypress', (e) => e.key === 'Enter' && document.getElementById('participantOtpInput').focus());
 
             const participantOtpInput = document.getElementById('participantOtpInput');
-            participantOtpInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    verifyParticipantOTP();
-                }
-            });
+            participantOtpInput.addEventListener('keypress', (e) => e.key === 'Enter' && verifyParticipantOTP());
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98b5daa0802ab4d0',t:'MTc1OTkyODc3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
